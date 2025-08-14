@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Difusión y Cuestionario</title>
+    <!-- Incluimos Tailwind CSS para un estilo rápido y limpio -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        canvas {
+            border: 2px solid #e5e7eb;
+            background-color: #f9fafb;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="container mx-auto p-8 bg-white rounded-2xl shadow-2xl max-w-4xl">
+        <h1 class="text-4xl font-bold text-center mb-6 text-gray-800">Simulador Interactivo</h1>
+        <p class="text-center text-gray-600 mb-8">
+            Este es un ejemplo de cómo crear una simulación de difusión simple y un cuestionario interactivo usando HTML, CSS y JavaScript.
+        </p>
+
+        <!-- Sección de la Simulación -->
+        <div class="mb-10 p-6 bg-blue-50 rounded-xl">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-800">Simulación de Difusión</h2>
+            <canvas id="diffusionCanvas" width="800" height="400" class="mx-auto block"></canvas>
+            <div class="flex justify-center space-x-4 mt-6">
+                <button id="startButton" class="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors">Iniciar</button>
+                <button id="stopButton" class="px-6 py-3 bg-red-500 text-white font-bold rounded-lg shadow-md hover:bg-red-600 transition-colors">Detener</button>
+                <button id="resetButton" class="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition-colors">Reiniciar</button>
+            </div>
+        </div>
+
+        <!-- Sección del Cuestionario -->
+        <div class="p-6 bg-purple-50 rounded-xl">
+            <h2 class="text-2xl font-semibold mb-4 text-purple-800">Cuestionario Básico</h2>
+            <div id="quizContainer">
+                <div class="mb-6 p-4 bg-white rounded-lg shadow-inner">
+                    <p class="font-medium text-gray-700">1. ¿Qué es la difusión?</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block">
+                            <input type="radio" name="q1" value="a" class="mr-2">
+                            El movimiento de partículas de un área de baja concentración a una de alta concentración.
+                        </label>
+                        <label class="block">
+                            <input type="radio" name="q1" value="b" class="mr-2">
+                            El movimiento de partículas de un área de alta concentración a una de baja concentración.
+                        </label>
+                        <label class="block">
+                            <input type="radio" name="q1" value="c" class="mr-2">
+                            La evaporación de un líquido.
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-6 p-4 bg-white rounded-lg shadow-inner">
+                    <p class="font-medium text-gray-700">2. ¿Qué factor aumenta la velocidad de difusión?</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block">
+                            <input type="radio" name="q2" value="a" class="mr-2">
+                            Aumentar la temperatura.
+                        </label>
+                        <label class="block">
+                            <input type="radio" name="q2" value="b" class="mr-2">
+                            Disminuir la temperatura.
+                        </label>
+                        <label class="block">
+                            <input type="radio" name="q2" value="c" class="mr-2">
+                            Aumentar la presión externa.
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center mt-6">
+                <button id="checkQuizButton" class="px-6 py-3 bg-purple-500 text-white font-bold rounded-lg shadow-md hover:bg-purple-600 transition-colors">Verificar Respuestas</button>
+            </div>
+            <div id="quizResult" class="mt-4 text-center text-lg font-semibold text-gray-800"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Obtenemos el elemento canvas y su contexto de dibujo 2D
+        const canvas = document.getElementById('diffusionCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Definimos las propiedades de la simulación
+        const particleCount = 200;
+        const particleRadius = 3;
+        let particles = [];
+        let animationFrameId = null;
+
+        // --- Lógica de la Simulación ---
+
+        // Función para inicializar las partículas
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                // Posición inicial de las partículas en la mitad izquierda del canvas
+                const x = Math.random() * (canvas.width / 2);
+                const y = Math.random() * canvas.height;
+                // Velocidad aleatoria en ambas direcciones (x, y)
+                const vx = (Math.random() - 0.5) * 1;
+                const vy = (Math.random() - 0.5) * 1;
+                particles.push({ x, y, vx, vy });
+            }
+        }
+
+        // Función para mover las partículas
+        function updateParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Rebotar en los bordes del canvas
+                if (p.x < 0 || p.x > canvas.width) {
+                    p.vx *= -1;
+                }
+                if (p.y < 0 || p.y > canvas.height) {
+                    p.vy *= -1;
+                }
+            }
+        }
+
+        // Función para dibujar las partículas en el canvas
+        function drawParticles() {
+            // Limpiamos el canvas antes de dibujar el nuevo fotograma
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#1e40af'; // Color de las partículas (azul oscuro)
+            for (let i = 0; i < particleCount; i++) {
+                const p = particles[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, particleRadius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // El bucle principal de la simulación
+        function simulate() {
+            updateParticles();
+            drawParticles();
+            animationFrameId = requestAnimationFrame(simulate);
+        }
+
+        // --- Manejo de Eventos para los Botones de la Simulación ---
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            if (!animationFrameId) {
+                simulate(); // Inicia la simulación si no está corriendo
+            }
+        });
+
+        document.getElementById('stopButton').addEventListener('click', () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId); // Detiene la simulación
+                animationFrameId = null;
+            }
+        });
+
+        document.getElementById('resetButton').addEventListener('click', () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            initParticles(); // Reinicia la posición de las partículas
+            drawParticles(); // Dibuja el estado inicial
+        });
+        
+        // Iniciar la simulación al cargar la página
+        window.onload = function() {
+            initParticles();
+            drawParticles();
+        };
+
+        // --- Lógica del Cuestionario ---
+
+        document.getElementById('checkQuizButton').addEventListener('click', () => {
+            const resultDiv = document.getElementById('quizResult');
+            const answers = {
+                q1: 'b',
+                q2: 'a'
+            };
+            let score = 0;
+
+            const q1Answer = document.querySelector('input[name="q1"]:checked');
+            const q2Answer = document.querySelector('input[name="q2"]:checked');
+
+            if (q1Answer && q1Answer.value === answers.q1) {
+                score++;
+            }
+            if (q2Answer && q2Answer.value === answers.q2) {
+                score++;
+            }
+
+            // Muestra el resultado
+            resultDiv.textContent = `Has obtenido ${score} de ${Object.keys(answers).length} respuestas correctas.`;
+
+            // Opcional: feedback visual
+            if (score === Object.keys(answers).length) {
+                resultDiv.classList.add('text-green-600');
+                resultDiv.classList.remove('text-red-600');
+            } else {
+                resultDiv.classList.add('text-red-600');
+                resultDiv.classList.remove('text-green-600');
+            }
+        });
+
+    </script>
+</body>
+</html>
